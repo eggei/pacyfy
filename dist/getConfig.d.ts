@@ -13,5 +13,5 @@ type ConfigResponse = {
     error?: Error;
     config?: Config;
 };
-export default function getConfig({ rootPath, configPath, }: Args): ConfigResponse;
+export default function getConfig({ rootPath, configPath, }: Args): Promise<ConfigResponse>;
 export {};

@@ -1,7 +1,7 @@
 {
   "name": "pacyfy",
-  "version": "0.0.0",
-  "description": "oclif example Hello World CLI",
+  "version": "0.0.1",
+  "description": "CLI for orchestrating Cypress tests",
   "author": "eggei",
   "bin": {
     "pacyfy": "./bin/run"

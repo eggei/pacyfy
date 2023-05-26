@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = require("fs");
 const path_1 = require("path");
 const defaultConfigPath = "pacyfy.config.json";
-function getConfig({ rootPath, configPath = defaultConfigPath, }) {
+async function getConfig({ rootPath, configPath = defaultConfigPath, }) {
     const filePath = (0, path_1.join)(rootPath, configPath);
     let configFile;
     let config;
