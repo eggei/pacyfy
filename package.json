@@ -18,6 +18,7 @@
   ],
   "dependencies": {
     "@oclif/core": "^2",
+    "@oclif/plugin-commands": "^2.2.15",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-plugins": "^2.4.7"
   },
@@ -42,14 +43,16 @@
     "dirname": "pacyfy",
     "commands": "./dist/commands",
     "plugins": [
-      "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
+      "@oclif/plugin-help"
     ],
     "topicSeparator": " ",
     "topics": {
       "hello": {
         "description": "Say hello to the world and others"
       }
+    },
+    "hooks": {
+      "init": "./dist/hooks/init/printLogo"
     }
   },
   "scripts": {
@@ -59,7 +62,8 @@
     "posttest": "yarn lint",
     "prepack": "yarn build && oclif manifest && oclif readme",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif readme && git add README.md"
+    "version": "oclif readme && git add README.md",
+    "dev-pacyfy": "cd test/test-app && ../../bin/dev"
   },
   "engines": {
     "node": ">=12.0.0"

@@ -1,26 +1,44 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 
-type Config = Record<string, any>;
+type Config = {
+  configFilePath?: string;
+  services: {
+    name: string;
+    run: string;
+  }[];
+};
+
 type Args = {
   rootPath: string;
   configPath?: string;
 };
 
+type ConfigResponse = { error?: Error; config?: Config };
+
 const defaultConfigPath = "pacyfy.config.json";
-export default function getConfig({
+export default async function getConfig({
   rootPath,
   configPath = defaultConfigPath,
-}: Args) {
+}: Args): Promise<ConfigResponse> {
   const filePath = join(rootPath, configPath);
+  let configFile: string;
+  let config: Config;
+
   try {
-    const configFile = readFileSync(filePath, "utf8");
-    const config: Config = JSON.parse(configFile);
-    return { config, error: null };
+    configFile = readFileSync(filePath, "utf8");
   } catch (error) {
-    return {
-      config: null,
-      error: new Error("Failed to parse the configuration file."),
-    };
+    return { error: new Error(error as string) };
   }
+
+  // at this point we know that the file exists
+  // so we can try to parse
+  try {
+    config = JSON.parse(configFile);
+  } catch (error) {
+    return { error: new Error(error as string) };
+  }
+
+  // if everything went alright, we can return the config
+  return { config };
 }

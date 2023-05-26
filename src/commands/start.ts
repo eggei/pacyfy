@@ -13,6 +13,7 @@ export default class Start extends Command {
   ];
 
   static flags = {
+    config: Flags.string({ char: "c", description: "Path to the config file" }),
     all: Flags.boolean({ char: "a", default: false }),
     type: Flags.string({
       char: "t",
@@ -25,37 +26,6 @@ export default class Start extends Command {
   public async run(): Promise<void> {
     const { flags } = await this.parse(Start);
 
-    const { error, config } = getConfig({
-      rootPath: this.config.root,
-      configPath: undefined,
-    });
-
-    if (error) {
-      this.error(error);
-    }
-    const { services } = config;
-    for (const [serviceName, serviceConfig] of Object.entries(services)) {
-      this.log(`Executing command for ${serviceName} service`);
-      const childProcess = spawn((serviceConfig as any).run, {
-        shell: true,
-        stdio: "inherit",
-      });
-
-      childProcess.on("error", (error) => {
-        this.error(`Failed to execute the command: ${error.message}`);
-      });
-
-      childProcess.on("close", (code) => {
-        if (code === 0) {
-          this.log("Command executed successfully!");
-        } else {
-          this.error(`Command execution failed with exit code ${code}`, {
-            exit: code || undefined,
-          });
-        }
-      });
-    }
-
     if (flags.all) {
       this.log("Running all the test categories");
       return;
@@ -63,6 +33,45 @@ export default class Start extends Command {
     if (!flags.type) {
       this.error("Please provide a test type with --type flag");
     }
-    this.log(`Running ${flags.type} tests`);
+
+    this.log(`Starting test category: ${flags.type}`);
+
+    const { error, config } = await getConfig({
+      rootPath: this.config.root,
+      configPath: flags.config,
+    });
+
+    if (error) {
+      this.error(error, { exit: 1 });
+    }
+
+    if (!config) {
+      this.error("Cannot get config file contents", { exit: 1 });
+    }
+
+    const { services } = config;
+    for (const service of services) {
+      const { name, run } = service;
+      this.log(`Running service: ${name}`);
+      const childProcess = spawn(run, { shell: true, stdio: "inherit" });
+      childProcess.on("data", (data) => {
+        this.log(data.toString());
+      });
+      childProcess.on("data", (data) => {
+        this.log(data.toString());
+      });
+      childProcess.on("error", (error) => {
+        this.error(error);
+      });
+      childProcess.on("close", (code) => {
+        if (code === 0) {
+          this.log("Done!");
+        } else {
+          this.error(`ERROR`, {
+            exit: code || undefined,
+          });
+        }
+      });
+    }
   }
 }
