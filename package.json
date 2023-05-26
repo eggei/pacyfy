@@ -45,7 +45,8 @@
     "dirname": "pacyfy",
     "commands": "./dist/commands",
     "plugins": [
-      "@oclif/plugin-help"
+      "@oclif/plugin-help",
+      "@oclif/plugin-commands"
     ],
     "topicSeparator": " ",
     "topics": {
