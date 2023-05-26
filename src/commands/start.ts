@@ -3,6 +3,8 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import getConfig from "../getConfig";
 import { spawn, spawnSync } from "child_process";
+import Listr = require("listr");
+const { $ } = require("execa");
 
 export default class Start extends Command {
   static description = `Starts the Cypress tests based on the given parameters`;
@@ -50,19 +52,28 @@ export default class Start extends Command {
     }
 
     const { services } = config;
-    for (const service of services) {
-      const { name, run } = service;
-      ux.action.start(`Running service: ${name}`);
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      const result = spawnSync(run, { shell: true, stdio: "inherit" });
-      if (result.error !== undefined) {
-        this.error(result.error, { exit: 1 });
-      }
 
-      if (result.status !== 0) {
-        this.error("ERROR", { exit: result.status || undefined });
-      }
-      ux.action.stop();
-    }
+    const tasks = new Listr(
+      services.map((service) => ({
+        title: `Running service: ${service.name}`,
+        task: () => {
+          const result = spawnSync(service.run, {
+            shell: true,
+            stdio: "inherit",
+          });
+          if (result.error !== undefined) {
+            this.error(result.error, { exit: 1 });
+          }
+
+          if (result.status !== 0) {
+            this.error("ERROR", { exit: result.status || undefined });
+          }
+        },
+      }))
+    );
+
+    tasks.run().catch((err: any) => {
+      this.error(err);
+    });
   }
 }
