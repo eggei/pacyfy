@@ -73,7 +73,21 @@
   },
   "bugs": "https://github.com/eggei/pacyfy/issues",
   "keywords": [
-    "oclif"
+    "cypress",
+    "testing",
+    "cli",
+    "orchestrating",
+    "orchestration",
+    "automation",
+    "oclif",
+    "ci",
+    "parallel",
+    "server",
+    "start",
+    "test",
+    "utility",
+    "wait",
+    "start-server-and-test"
   ],
   "types": "dist/index.d.ts"
 }
