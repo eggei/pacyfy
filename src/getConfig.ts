@@ -1,12 +1,14 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 
-type Config = {
+export type Service = {
+  name: string;
+  run: string;
+  healthCheckURL: string;
+};
+export type Config = {
   configFilePath?: string;
-  services: {
-    name: string;
-    run: string;
-  }[];
+  services: Service[];
 };
 
 type Args = {

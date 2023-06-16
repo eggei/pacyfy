@@ -8,7 +8,7 @@ const hook: Hook<"init"> = async function (opts) {
  |  _|__,|___|_  |_| |_  |
  |_|         |___|   |___| 
   
-  Cypress Test Runner
+  Cypress Tests Orchestrator
   Version: ${opts.config.version}
       
       ---------------

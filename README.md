@@ -13,7 +13,7 @@ CLI for orchestrating Cypress tests
  |  _|__,|___|_  |_| |_  |
  |_|         |___|   |___| 
   
-  Cypress Test Runner
+  Cypress Tests Orchestrator 
   Version: 0.0.0
       
       ---------------

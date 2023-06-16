@@ -21,7 +21,8 @@
     "@oclif/plugin-commands": "^2.2.15",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-plugins": "^2.4.7",
-    "listr": "^0.14.3"
+    "listr": "^0.14.3",
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@oclif/test": "^2.3.20",

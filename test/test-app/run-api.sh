@@ -1,3 +1,7 @@
 #!/bin/sh
 
-echo "Running the API server..."
+echo "Running API"
+sleep 2
+echo "API is running"
+sleep 2
+echo "Done"
