@@ -25,3 +25,8 @@ CLI for orchestrating Cypress tests
  start    Starts the Cypress tests based on the given parameters 
  
 ```
+
+TODO
+
+- create the mechanism to kill the started processes if pacyfy failed to run the totality of the services
+- clean up the service health check function
