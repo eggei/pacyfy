@@ -30,3 +30,11 @@ TODO
 
 - create the mechanism to kill the started processes if pacyfy failed to run the totality of the services
 - clean up the service health check function
+
+### Test
+
+Example command to test the `start` command with the `test-app`:
+
+```shell
+yarn dev-pacyfy start -t e2e -c test/test-app/pacyfy.config.json
+```

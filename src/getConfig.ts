@@ -5,6 +5,7 @@ export type Service = {
   name: string;
   run: string;
   healthCheckURL: string;
+  healthCheckTimeout?: number;
 };
 export type Config = {
   configFilePath?: string;
