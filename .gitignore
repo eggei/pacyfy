@@ -3,3 +3,4 @@ pacyfy.config.json
 dist/
 test/test-app/node_modules
 test/test-app/pacyfy.config.json
+yarn-error.log

@@ -1,10 +1,11 @@
 import { spawn } from "child_process";
 import { Observable } from "rxjs";
-import { Service } from "../../getConfig";
+import { Service, defaultConfig } from "../../config";
 import { TaskContext } from "./types";
 import Listr = require("listr");
 import waitOn = require("wait-on");
 import { WaitOnOptions } from "wait-on";
+import treeKill = require("tree-kill");
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -21,16 +22,14 @@ export function getServiceStartTask(service: Service) {
       return new Observable((observer) => {
         observer.next(`Running: ${service.run}`);
         // initailize the service context
-        ctx[service.name] = { error: false, process: null };
+        ctx[service.name] = { error: "", process: null };
         const runCMD = service.run.split(" ");
 
-        const serviceProcess = spawn(runCMD[0], [...runCMD.slice(1)], {
-          detached: true,
-        });
+        const serviceProcess = spawn(runCMD[0], [...runCMD.slice(1)]);
         // place process in context for later use
         ctx[service.name].process = serviceProcess;
 
-        // If error in the process
+        // If error in the process, save it in state
         let error = "";
         serviceProcess.stderr.on("data", (chunk) => {
           error += chunk.toString();
@@ -41,16 +40,38 @@ export function getServiceStartTask(service: Service) {
         serviceProcess.stdout.on("data", (chunk) => {
           log += chunk.toString();
           observer.next(log);
+
+          // any errors in this process will be caught in the health check
+          // so, we just run given command and complete the observer once we
+          // get any log from the process
           observer.complete();
         });
 
-        // If process is closed
-        serviceProcess.on("close", (code) => {
+        serviceProcess.on("exit", (code) => {
           if (code !== 0) {
-            observer.error(
-              new Error(`Failed to run the service - ${error || log}`)
-            );
-            ctx[service.name] = { error: true };
+            const errorLog = `Following error occured in the process: ${
+              error ||
+              "Process does not produce error output. Error might be related to something else than the process itself."
+            }`;
+            ctx[service.name].error = errorLog;
+            observer.error(error);
+          } else {
+            observer.complete();
+          }
+        });
+
+        // If the process is forcefully killed
+        process.on("SIGTERM", () => {
+          if (serviceProcess.pid) {
+            treeKill(serviceProcess.pid, (err?: Error) => {
+              if (err) {
+                task.report(err);
+                observer.error(err);
+              } else {
+                task.report(new Error("Process was killed"));
+                observer.complete();
+              }
+            });
           }
         });
       }) as unknown as Listr.ListrTaskResult<TaskContext>;
@@ -59,19 +80,37 @@ export function getServiceStartTask(service: Service) {
 }
 
 export function getServiceHealthTask(service: Service) {
-  if (!service.healthCheckURL) {
-    return [];
-  }
+  // if (!service.healthCheckURL) {
+  //   return [];
+  // }
 
   return [
     {
       title: `Health check`,
       task: (ctx: TaskContext, task: Listr.ListrTaskWrapper<TaskContext>) => {
         return new Observable((observer) => {
+          if (!service.healthCheckURL) {
+            task.skip("No health check URL provided");
+            observer.complete();
+          }
+
+          /**
+           * timeElapsed is to keep track of the time elapsed
+           * since the health check started. Once it reaches the timeout
+           * the health check will be considered failed
+           * */
           let timeElapsed = 0;
-          const defaultTimeout = 10000;
+          const defaultTimeout =
+            service.healthCheckTimeout || defaultConfig.healthCheckTimeout;
+
           // start a timer to show time elapsed
           const timer = setInterval(() => {
+            // if there was an error in the run task, it should be caught here
+            const errorInRunTask = ctx[service.name].error;
+            if (errorInRunTask) {
+              observer.error(errorInRunTask);
+              return;
+            }
             timeElapsed++;
             observer.next(
               `Waiting for ${service.healthCheckURL} (${timeElapsed} seconds elapsed) `
@@ -99,47 +138,3 @@ export function getServiceHealthTask(service: Service) {
     },
   ];
 }
-
-// let retryCount = 0;
-/** DEPRACATED - old manual health checker  */
-// const healthCheck = (observer: any, ctx: any, service: Service) => {
-//   retryCount++;
-//   const serviceProcess = spawn("curl", ["-sSf", service.healthCheckURL]);
-
-//   // keeps the log
-//   let log = "";
-//   serviceProcess.stdout.on("data", (chunk) => {
-//     log += chunk.toString();
-//     observer.next(log);
-//   });
-
-//   // If error in the process, retry if possible
-//   let error = "";
-//   serviceProcess.stderr.on("data", async (chunk) => {
-//     error += chunk.toString();
-//   });
-
-//   // If process is closed
-//   serviceProcess.on("close", (code) => {
-//     // if the code is 0, we're good
-//     if (code === 0) {
-//       observer.complete();
-//       return;
-//     }
-//     // if the retry count is maxed out, give some output
-//     if (retryCount === maxRetries) {
-//       console.log(log + `Exit code: ${code}`);
-//       if (error) {
-//         ctx[service.name] = { error: true };
-//         observer.error(new Error(error));
-//         return;
-//       }
-//     }
-//   });
-
-//   // wait and retry
-//   observer.next(
-//     `Checking: ${service.healthCheckURL} (${retryCount}/${maxRetries} failed attempt) `
-//   );
-//   sleep(healthRetryInterval).then(() => healthCheck(observer, ctx, service));
-// };

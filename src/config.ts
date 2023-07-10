@@ -1,12 +1,26 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 
+export const defaultConfig = Object.freeze({
+  configFilePath: "pacyfy.config.json",
+  healthCheckTimeout: 30000, // ms
+});
+
+export enum ServiceDeclarationFields {
+  name = "name",
+  run = "run",
+  healthCheckURL = "healthCheckURL",
+  healthCheckTimeout = "healthCheckTimeout",
+}
 export type Service = {
-  name: string;
-  run: string;
-  healthCheckURL: string;
-  healthCheckTimeout?: number;
+  // required
+  [ServiceDeclarationFields.name]: string;
+  [ServiceDeclarationFields.run]: string;
+  [ServiceDeclarationFields.healthCheckURL]: string;
+  // optional
+  [ServiceDeclarationFields.healthCheckTimeout]?: number;
 };
+
 export type Config = {
   configFilePath?: string;
   services: Service[];
@@ -19,10 +33,9 @@ type Args = {
 
 type ConfigResponse = { error?: Error; config?: Config };
 
-const defaultConfigPath = "pacyfy.config.json";
 export default async function getConfig({
   rootPath,
-  configPath = defaultConfigPath,
+  configPath = defaultConfig.configFilePath,
 }: Args): Promise<ConfigResponse> {
   const filePath = join(rootPath, configPath);
   let configFile: string;

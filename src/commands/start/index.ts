@@ -1,8 +1,9 @@
 import { Command, Flags } from "@oclif/core";
-import getConfig from "../../getConfig";
+import getConfig from "../../config";
 import Listr = require("listr");
 import { getServiceHealthTask, getServiceStartTask } from "./task-executor";
 import { TaskContext } from "./types";
+import { validateServiceDeclaration } from "./helpers";
 
 export default class Start extends Command {
   static description = `Starts the Cypress tests based on the given parameters`;
@@ -50,6 +51,21 @@ export default class Start extends Command {
     }
 
     const { services } = config;
+
+    // if there are missing required config values, error out here
+    const missingConfig = validateServiceDeclaration(services);
+    if (missingConfig.length > 0) {
+      this.error(
+        `Missing required config in service declaration:
+
+--> ${missingConfig.join(`\n--> `)}
+
+Received service declarations:
+${JSON.stringify(services, null, 2)}}
+`,
+        { exit: 1 }
+      );
+    }
 
     const tasks = new Listr<TaskContext>(
       services.map((service) => ({

@@ -25,6 +25,7 @@
     "fastify": "^4.19.2",
     "listr": "^0.14.3",
     "rxjs": "^7.8.1",
+    "tree-kill": "^1.2.2",
     "wait-on": "^7.0.1"
   },
   "devDependencies": {
@@ -70,7 +71,7 @@
     "prepack": "yarn build && oclif manifest && oclif readme",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif readme && git add README.md",
-    "dev-pacyfy": "cd test/test-app && ../../bin/dev"
+    "dev-pacyfy": "cd test/test-app/ui && ../../../bin/dev"
   },
   "engines": {
     "node": ">=12.0.0"

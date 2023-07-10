@@ -31,5 +31,5 @@ CLI for orchestrating Cypress tests
 Example command to test the `start` command with the `test-app`:
 
 ```shell
-yarn dev-pacyfy start -t e2e -c test/test-app/pacyfy.config.json
+yarn dev-pacyfy start -t e2e -c test/test-app/ui/pacyfy.config.json
 ```
