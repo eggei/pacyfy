@@ -1,10 +1,13 @@
 import { ChildProcessWithoutNullStreams } from "child_process";
 
-export type ServiceName = string;
-export type TaskContext = Record<
-  ServiceName,
+type ServiceContext = Record<
+  string,
   Partial<{
     error: string;
     process: ChildProcessWithoutNullStreams | null;
   }>
 >;
+export type TaskContext = {
+  services: ServiceContext;
+  databases: ServiceContext;
+};

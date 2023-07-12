@@ -5,6 +5,7 @@ import {
   Service,
   ServiceDeclarationFields,
 } from "../../config";
+import { TaskContext } from "./types";
 
 export function validateCleanConfig(
   config: Config,
@@ -106,4 +107,19 @@ Databases: ${JSON.stringify(config.databases, null, 2)}
       { exit: 1 }
     );
   }
+}
+
+export function initContext(config: Config) {
+  const initialContext = { error: "", process: null };
+  const context: TaskContext = {
+    services: {},
+    databases: {},
+  };
+  config.services.forEach((service) => {
+    context.services[service.name] = initialContext;
+  });
+  config.databases.forEach((db) => {
+    context.databases[db.name] = initialContext;
+  });
+  return context;
 }

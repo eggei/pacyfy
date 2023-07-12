@@ -16,14 +16,12 @@ export function getDatabaseStartTask(db: Database) {
       task: (ctx: TaskContext, task: Listr.ListrTaskWrapper<TaskContext>) => {
         return new Observable((observer) => {
           observer.next(`Running: ${db.name}`);
-          // initailize the database context
-          ctx[db.name] = { error: "", process: null };
 
           const [cmd, ...args] = db.run.split(" ");
           const dbStartProcess = spawn(cmd, args);
           observer.next(`Running command: ${db.run}`);
           // place process in context for later use
-          ctx[db.name].process = dbStartProcess;
+          ctx.databases[db.name].process = dbStartProcess;
           // If error in the process, save it in state
           let error = "";
           dbStartProcess.stderr.on("data", (chunk) => {
@@ -46,7 +44,7 @@ export function getDatabaseStartTask(db: Database) {
                 error ||
                 "Process does not produce error output. Error might be related to something else than the process itself."
               }`;
-              ctx[db.name].error = errorLog;
+              ctx.databases[db.name].error = errorLog;
               observer.error(error);
             } else {
               observer.complete();
@@ -72,7 +70,7 @@ export function getDatabaseHealthTask(db: Database) {
 
           const runHealthCheck = () => {
             //   if there was an error in the run task, it should be caught here
-            const errorInRunTask = ctx[db.name].error;
+            const errorInRunTask = ctx.databases[db.name].error;
             if (errorInRunTask) {
               observer.error(new Error(errorInRunTask));
               return;
