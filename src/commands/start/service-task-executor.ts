@@ -15,14 +15,12 @@ export function getServiceStartTask(service: Service) {
       task: (ctx: TaskContext, task: Listr.ListrTaskWrapper<TaskContext>) => {
         return new Observable((observer) => {
           observer.next(`Running: ${service.run}`);
-          // initailize the service context
-          ctx[service.name] = { error: "", process: null };
 
           const [cmd, ...args] = service.run.split(" ");
           const serviceProcess = spawn(cmd, args);
 
           // place process in context for later use
-          ctx[service.name].process = serviceProcess;
+          ctx.services[service.name].process = serviceProcess;
 
           // If error in the process, save it in state
           let error = "";
@@ -48,7 +46,7 @@ export function getServiceStartTask(service: Service) {
                 error ||
                 "Process does not produce error output. Error might be related to something else than the process itself."
               }`;
-              ctx[service.name].error = errorLog;
+              ctx.services[service.name].error = errorLog;
               observer.error(new Error(error));
             } else {
               observer.complete();
@@ -99,7 +97,7 @@ export function getServiceHealthTask(service: Service) {
           // start a timer to show time elapsed
           const timer = setInterval(() => {
             // if there was an error in the run task, it should be caught here
-            const errorInRunTask = ctx[service.name].error;
+            const errorInRunTask = ctx.services[service.name].error;
             if (errorInRunTask) {
               observer.error(new Error(errorInRunTask));
               return;

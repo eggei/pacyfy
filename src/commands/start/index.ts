@@ -6,7 +6,7 @@ import {
   getServiceStartTask,
 } from "./service-task-executor";
 import { TaskContext } from "./types";
-import { validateCleanConfig } from "./helpers";
+import { initContext, validateCleanConfig } from "./helpers";
 import {
   getDatabaseHealthTask,
   getDatabaseStartTask,
@@ -65,44 +65,39 @@ export default class Start extends Command {
 
     const serviceTasks = services.map((service) => ({
       title: `Service: ${service.name}`,
-      task: () =>
-        new Listr<TaskContext>(
+      task: (ctx: TaskContext) => {
+        return new Listr<TaskContext>(
           [...getServiceStartTask(service), ...getServiceHealthTask(service)],
-          { concurrent: false }
-        ),
+          {
+            concurrent: true,
+          }
+        );
+      },
     }));
 
     const databaseTasks = databases.map((db) => ({
       title: `Database: ${db.name}`,
-      task: () =>
+      task: (ctx: TaskContext) => {
         new Listr<TaskContext>(
           [...getDatabaseStartTask(db), ...getDatabaseHealthTask(db)],
-          { concurrent: false }
-        ),
+          { concurrent: true }
+        );
+      },
     }));
 
     const testTasks = [
       {
         title: "Tests",
-        task: () =>
-          new Listr<TaskContext>([
-            {
-              title: "Run tests",
-              task: (
-                ctx: TaskContext,
-                task: Listr.ListrTaskWrapper<TaskContext>
-              ) => {
-                return new Observable((observer) => {
-                  // skip this task
-                  observer.next("Skipping tests for now");
-                  setTimeout(() => {
-                    task.skip("Skipping tests for now");
-                    observer.complete();
-                  }, 2000);
-                }) as unknown as Listr.ListrTaskResult<TaskContext>;
-              },
-            },
-          ]),
+        task: (ctx: TaskContext, task: Listr.ListrTaskWrapper<TaskContext>) => {
+          // If error found in any of the service execution tasks, skip the tests
+          // TODO: Make context a class and everytime an error is set
+          // it should also set ctx.error = true
+          // so we can skip the tests
+          if (ctx.error) {
+            task.skip("Error found in service execution tasks");
+            return Promise.reject();
+          }
+        },
       },
     ];
 
@@ -145,7 +140,7 @@ export default class Start extends Command {
       ...tearDownTasks,
     ]);
 
-    tasks.run().catch((err: any) => {
+    tasks.run(initContext(config)).catch((err: any) => {
       this.error(err);
     });
   }
