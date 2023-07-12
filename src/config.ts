@@ -21,9 +21,30 @@ export type Service = {
   [ServiceDeclarationFields.healthCheckTimeout]?: number;
 };
 
+export enum DatabaseDeclarationFields {
+  name = "name",
+  run = "run",
+  healthCheckCMD = "healthCheckCMD",
+  healthCheckTimeout = "healthCheckTimeout",
+  tearDownCMD = "tearDownCMD",
+  seedCMD = "seedCMD",
+}
+
+export type Database = {
+  // required
+  [DatabaseDeclarationFields.name]: string;
+  [DatabaseDeclarationFields.run]: string;
+  [DatabaseDeclarationFields.healthCheckCMD]: string;
+  [DatabaseDeclarationFields.tearDownCMD]: string;
+  // optional
+  [DatabaseDeclarationFields.healthCheckTimeout]?: number;
+  [DatabaseDeclarationFields.seedCMD]?: string;
+};
+
 export type Config = {
   configFilePath?: string;
   services: Service[];
+  databases: Database[];
 };
 
 type Args = {
@@ -53,6 +74,14 @@ export default async function getConfig({
     config = JSON.parse(configFile);
   } catch (error) {
     return { error: new Error(error as string) };
+  }
+
+  // empty config guard
+  if (!config.services?.length) {
+    config.services = [];
+  }
+  if (!config.databases?.length) {
+    config.databases = [];
   }
 
   // if everything went alright, we can return the config
