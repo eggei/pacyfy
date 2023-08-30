@@ -1,12 +1,12 @@
 import { Command, Flags } from "@oclif/core";
-import getConfig from "../../config";
+import getConfig, { Database } from "../../config";
 import Listr = require("listr");
 import {
   getServiceHealthTask,
   getServiceStartTask,
 } from "./service-task-executor";
 import { TaskContext } from "./types";
-import { initContext, validateCleanConfig } from "./helpers";
+import { getPacyfyError, initContext, validateCleanConfig } from "./helpers";
 import {
   getDatabaseHealthTask,
   getDatabaseStartTask,
@@ -78,7 +78,7 @@ export default class Start extends Command {
     const databaseTasks = databases.map((db) => ({
       title: `Database: ${db.name}`,
       task: (ctx: TaskContext) => {
-        new Listr<TaskContext>(
+        return new Listr<TaskContext>(
           [...getDatabaseStartTask(db), ...getDatabaseHealthTask(db)],
           { concurrent: true }
         );
@@ -93,10 +93,17 @@ export default class Start extends Command {
           // TODO: Make context a class and everytime an error is set
           // it should also set ctx.error = true
           // so we can skip the tests
+
           if (ctx.error) {
             task.skip("Error found in service execution tasks");
             return Promise.reject();
           }
+          return new Observable((observer) => {
+            observer.next("Running tests...");
+            setTimeout(() => {
+              observer.complete();
+            }, 5000);
+          }) as unknown as Listr.ListrTaskResult<TaskContext>;
         },
       },
     ];
@@ -124,7 +131,7 @@ export default class Start extends Command {
                       error ||
                       "Process does not produce error output. Error might be related to something else than the process itself."
                     }`;
-                    this.error(errorLog, { exit: 1 });
+                    this.error(getPacyfyError(errorLog), { exit: 1 });
                   }
                 });
               },
@@ -134,7 +141,7 @@ export default class Start extends Command {
     ];
 
     const tasks = new Listr<TaskContext>([
-      ...serviceTasks,
+      // ...serviceTasks,
       ...databaseTasks,
       ...testTasks,
       ...tearDownTasks,

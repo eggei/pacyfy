@@ -6,6 +6,7 @@ import Listr = require("listr");
 import waitOn = require("wait-on");
 import { WaitOnOptions } from "wait-on";
 import treeKill = require("tree-kill");
+import { getPacyfyError } from "./helpers";
 
 export function getServiceStartTask(service: Service) {
   if (!service) return [];
@@ -42,12 +43,8 @@ export function getServiceStartTask(service: Service) {
 
           serviceProcess.on("exit", (code) => {
             if (code !== 0) {
-              const errorLog = `Following error occured in the process: ${
-                error ||
-                "Process does not produce error output. Error might be related to something else than the process itself."
-              }`;
-              ctx.services[service.name].error = errorLog;
-              observer.error(new Error(error));
+              ctx.services[service.name].error = error;
+              observer.error(getPacyfyError(error));
             } else {
               observer.complete();
             }
@@ -59,7 +56,7 @@ export function getServiceStartTask(service: Service) {
               treeKill(serviceProcess.pid, (err?: Error) => {
                 if (err) {
                   task.report(err);
-                  observer.error(err);
+                  observer.error(getPacyfyError(err));
                 } else {
                   task.report(new Error("Process was killed"));
                   observer.complete();
@@ -99,7 +96,7 @@ export function getServiceHealthTask(service: Service) {
             // if there was an error in the run task, it should be caught here
             const errorInRunTask = ctx.services[service.name].error;
             if (errorInRunTask) {
-              observer.error(new Error(errorInRunTask));
+              observer.error(getPacyfyError(errorInRunTask));
               return;
             }
             timeElapsed++;
@@ -119,7 +116,7 @@ export function getServiceHealthTask(service: Service) {
               observer.complete();
             })
             .catch((err: Error) => {
-              observer.error(err);
+              observer.error(getPacyfyError(err));
             })
             .finally(() => {
               clearInterval(timer);

@@ -5,6 +5,7 @@ import {
   Service,
   ServiceDeclarationFields,
 } from "../../config";
+import { APP_NAME } from "../../constants";
 import { TaskContext } from "./types";
 
 export function validateCleanConfig(
@@ -122,4 +123,21 @@ export function initContext(config: Config) {
     context.databases[db.name] = initialContext;
   });
   return context;
+}
+
+/**
+ *
+ * @param error Error needs to be printed out
+ * @param service Service declaration
+ * @returns A new error message that is pretty printed for the user
+ *
+ * Use this to get a nice error message for the user
+ */
+export function getPacyfyError(err: string | Error) {
+  return new Error(`
+--------------------------------
+${APP_NAME} Message:
+
+${err.toString() || "No error log produced by the process"}
+--------------------------------`);
 }

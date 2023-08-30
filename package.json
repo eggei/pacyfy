@@ -24,6 +24,7 @@
     "@types/wait-on": "^5.3.1",
     "fastify": "^4.19.2",
     "listr": "^0.14.3",
+    "listr2": "^6.6.1",
     "rxjs": "^7.8.1",
     "tree-kill": "^1.2.2",
     "wait-on": "^7.0.1"

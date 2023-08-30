@@ -7,6 +7,8 @@ import waitOn = require("wait-on");
 import { WaitOnOptions } from "wait-on";
 import treeKill = require("tree-kill");
 import { Database } from "../../config";
+import { APP_NAME } from "../../constants";
+import { getPacyfyError } from "./helpers";
 
 export function getDatabaseStartTask(db: Database) {
   if (!db) return [];
@@ -45,7 +47,7 @@ export function getDatabaseStartTask(db: Database) {
                 "Process does not produce error output. Error might be related to something else than the process itself."
               }`;
               ctx.databases[db.name].error = errorLog;
-              observer.error(error);
+              observer.error(getPacyfyError(error));
             } else {
               observer.complete();
             }
@@ -55,6 +57,22 @@ export function getDatabaseStartTask(db: Database) {
     },
   ];
 }
+
+// function gracefulShutdown(ctx: TaskContext, db: Database) {
+//   console.log(`Gracefully shutting down ${db.name}...`);
+//   const dbProcess = ctx.databases[db.name].process;
+//   // kill the process (if still exists)
+//   if (dbProcess && dbProcess.pid) {
+//     treeKill(dbProcess.pid, "SIGTERM", (err) => {
+//       if (err) {
+//         console.error(getPacyfyError(err));
+//       }
+//     });
+//   }
+//   // run the teardown command provided by the user
+//   tearDownDB(console.error, db);
+// }
+
 // config
 const maxRetries = 10;
 const healthRetryInterval = 1000;
@@ -72,7 +90,7 @@ export function getDatabaseHealthTask(db: Database) {
             //   if there was an error in the run task, it should be caught here
             const errorInRunTask = ctx.databases[db.name].error;
             if (errorInRunTask) {
-              observer.error(new Error(errorInRunTask));
+              observer.error(getPacyfyError(errorInRunTask));
               return;
             }
 
@@ -84,10 +102,8 @@ export function getDatabaseHealthTask(db: Database) {
               } else {
                 retries++;
                 if (retries >= maxRetries) {
-                  const err = new Error(
-                    `Health check failed after ${maxRetries} retries`
-                  );
-                  observer.error(err); // report error to the observer
+                  const err = `Health check failed after ${maxRetries} retries`;
+                  observer.error(getPacyfyError(err)); // report error to the observer
                 } else {
                   observer.next(
                     `Retries: ${retries}/${maxRetries} - Running: ${db.healthCheckCMD}`
