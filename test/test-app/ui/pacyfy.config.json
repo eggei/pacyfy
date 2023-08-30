@@ -5,13 +5,19 @@
       "run": "yarn api",
       "healthCheckURL": "http://localhost:4000",
       "healthCheckTimeout": 1000
+    },
+    {
+      "name": "ui",
+      "run": "yarn dev",
+      "healthCheckURL": "http://localhost:3000",
+      "healthCheckTimeout": 15000
     }
   ],
   "databases": [
     {
       "name": "test-db",
-      "run": " docker run -d -e POSTGRES_PASSWORD=postgres -e POSTGRES_USERNAME=postgres --name pacyfy-test-db -p 5432:5432 postgres:12",
-      "healthCheckCMD": "pg_isready --host=localhost --port=5432",
+      "run": "docker run -d -e POSTGRES_PASSWORD=postgres -e POSTGRES_USERNAME=postgres --name pacyfy-test-db -p 5432:5432 postgres:12",
+      "healthCheckCMD": "echo 'pg_isready --host=localhost --port=5432'",
       "tearDownCMD": "docker rm -f pacyfy-test-db"
     }
   ]
