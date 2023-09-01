@@ -4,7 +4,7 @@
       "name": "api",
       "run": "yarn api",
       "healthCheckURL": "http://localhost:4000",
-      "healthCheckTimeout": 1000
+      "healthCheckTimeout": 5000
     },
     {
       "name": "ui",

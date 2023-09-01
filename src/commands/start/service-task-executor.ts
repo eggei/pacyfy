@@ -29,7 +29,11 @@ export function getServiceStartTask(service: Service) {
         });
 
         serviceProcess.stdout.on("data", (chunk) => {
-          process.stdout.write(`[SERVICE LOG: ${service.name}] ${chunk}`);
+          // TODO: logs are spitted out when the entire list of tasks are completed in default renderer
+          // so, we need to find a way to show logs in realtime whilst using the default renderer
+          // For now, don't show logs
+          // process.stdout.write(`[SERVICE LOG: ${service.name}] ${chunk}`);
+
           // any errors in this process will be caught in the health check
           // so, we just run given command and complete the observer once we
           // get any log from the process

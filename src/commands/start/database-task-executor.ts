@@ -30,7 +30,6 @@ export function getDatabaseStartTask(db: Database) {
         });
 
         dbStartProcess.stdout.on("data", (chunk) => {
-          process.stdout.write(`[SERVICE LOG: ${db.name}] ${chunk}`);
           // any errors in this process will be caught in the health check
           // so, we just run given command and complete the observer once we
           // get any log from the process

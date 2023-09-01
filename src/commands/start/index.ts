@@ -1,18 +1,25 @@
 import { Command, Flags } from "@oclif/core";
-import getConfig, { Database } from "../../config";
+import getConfig, { Database, ServiceDeclarationFields } from "../../config";
 import { DefaultRenderer, Listr, ListrTask, VerboseRenderer } from "listr2";
 import {
   getServiceHealthTask,
   getServiceStartTask,
 } from "./service-task-executor";
 import { TaskContext } from "./types";
-import { getPacyfyError, initContext, validateCleanConfig } from "./helpers";
+import {
+  getPacyfyError,
+  initContext,
+  killServiceProcesses,
+  tearDownDatabases,
+  validateCleanConfig,
+} from "./helpers";
 import {
   getDatabaseHealthTask,
   getDatabaseStartTask,
 } from "./database-task-executor";
 import { spawn } from "child_process";
 import { Observable } from "rxjs";
+import treeKill = require("tree-kill");
 
 export default class Start extends Command {
   static description = `Starts the Cypress tests based on the given parameters`;
@@ -115,7 +122,7 @@ export default class Start extends Command {
           const id = setInterval(() => {
             task.title = `Running tests: ${count}`;
             observer.next(`Test Log example: This is test ${count}`);
-            if (count === 10) {
+            if (count === 3) {
               clearInterval(id);
               observer.complete();
             }
@@ -131,25 +138,11 @@ export default class Start extends Command {
         new Listr<TaskContext>([
           {
             title: "Tear down",
-            task: () => {
-              // teardown db
-              const tearDownCMD = databases[0].tearDownCMD;
-              const [cmd, ...args] = tearDownCMD.split(" ");
-              const dbTearDownProcess = spawn(cmd, args);
-              let error = "";
-              dbTearDownProcess.stderr.on("data", (chunk) => {
-                error += chunk.toString();
-              });
-
-              dbTearDownProcess.on("exit", (code) => {
-                if (code !== 0) {
-                  const errorLog = `Following error occured in the database tear down process: ${
-                    error ||
-                    "Process does not produce error output. Error might be related to something else than the process itself."
-                  }`;
-                  this.error(getPacyfyError(errorLog), { exit: 1 });
-                }
-              });
+            task: (ctx) => {
+              // exit from the pacyfy process (this will kill all referenced processes started in service tasks)
+              killServiceProcesses(this, services);
+              // iterate over databases and run teardown commands
+              tearDownDatabases(databases);
             },
           },
         ]),
